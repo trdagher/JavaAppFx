@@ -1,18 +1,18 @@
 package com.example.loginform;
 
-public class Products {
-     String type;
+public class Report {
+    String type;
     String name;
     double price;
-     int id;
-    int cartQuantity;
+    int id;
+    int quantitySold;
 
-    public Products(String type, String name, double price, int id,int cartQuantity) {
+    public Report(String type, String name, double price, int id, int quantitySold) {
         this.type = type;
         this.name = name;
         this.price = price;
         this.id = id;
-        this.cartQuantity = cartQuantity;
+        this.quantitySold = quantitySold;
     }
 
     public String getType() {
@@ -47,14 +47,11 @@ public class Products {
         this.id = id;
     }
 
-    public int getCartQuantity() {
-        return cartQuantity;
+    public int getQuantitySold() {
+        return quantitySold;
     }
 
-    public void setCartQuantity(int cartQuantity) {
-        this.cartQuantity = cartQuantity;
+    public void setQuantitySold(int quantitySold) {
+        this.quantitySold = quantitySold;
     }
 }
-
-
-

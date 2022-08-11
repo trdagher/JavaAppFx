@@ -16,6 +16,7 @@ public class ConfirmBox {
         window.setTitle(title);
         window.setMinWidth(200);
         Label label1 = new Label(message);
+        label1.setId("confirmLabel");
         Button yesButton = new Button("Yes");
         Button noButton = new Button("No");
         yesButton.setOnAction(e -> {
@@ -26,10 +27,14 @@ public class ConfirmBox {
             answear =  false;
             window.close();
         });
+        yesButton.setId("roundBlack");
+        noButton.setId("roundBlack");
         VBox layout = new VBox(10);
         layout.getChildren().addAll(label1,noButton,yesButton);
+        layout.setStyle("-fx-background-color:#010159;");
         layout.setAlignment(Pos.CENTER);
         Scene scene = new Scene(layout);
+        scene.getStylesheets().add(ConfirmBox.class.getResource("/Cart.css").toExternalForm());
         window.setScene(scene);
         window.showAndWait(); // display this window and before you exit you have to close the window
         return answear;

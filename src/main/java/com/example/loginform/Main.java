@@ -1,5 +1,5 @@
 package com.example.loginform;
-//1192
+
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.TranslateTransition;
@@ -9,17 +9,15 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.css.Style;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
-import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.ComboBoxListCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.effect.*;
@@ -32,7 +30,6 @@ import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
 import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Screen;
@@ -41,17 +38,14 @@ import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.converter.IntegerStringConverter;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.sql.*;
 
-import java.util.ArrayList;
-import java.util.Objects;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -100,6 +94,12 @@ public class Main extends Application {
         box1.setSpacing(17);
         box2.setSpacing(20);
         Button loginButton = new Button("Login");
+
+//        startWindowUserNameInput.setBackground(new Background(new BackgroundFill(Color.BLACK,null,null)));
+     startWindowUserNameInput.setStyle("-fx-background-color:#d9d9d9;\n"+
+             "-fx-text-fill:rgb(18, 16, 14);");
+     startWindowPassInput.setStyle("-fx-background-color:#d9d9d9;\n"+
+             "-fx-text-fill:rgb(18, 16, 14);");
 
         usernameLabel.setStyle("  -fx-font-size: 16px;\n" +
                 "    -fx-font-weight: bold;\n" +
@@ -215,7 +215,11 @@ public class Main extends Application {
                  alert.setTitle("login alert");
                  alert.setHeaderText(null);
                  alert.setContentText("username does not exist feel free to sign up");
+                 DialogPane dialogPane = alert.getDialogPane();
+                 dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                 dialogPane.setId("myDialog");
                  alert.show();
+                 
              }else {
                  checkPassword = connection.prepareStatement("SELECT passWord FROM users WHERE userName = ?");
                  checkPassword.setString(1, name);
@@ -231,9 +235,12 @@ public class Main extends Application {
                      firstWindow(name);
                  } else {
                      Alert alert = new Alert(Alert.AlertType.WARNING);
-                     alert.setTitle("wrong password");
-                     alert.setHeaderText(null);
+                     alert.setTitle("Alert!!");
+                     alert.setHeaderText("Incorrect password");
                      alert.setContentText("incorrect password try again");
+                     DialogPane dialogPane = alert.getDialogPane();
+                     dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                     dialogPane.getStyleClass().add("dialogRed");
                      alert.show();
                  }
              }
@@ -300,7 +307,26 @@ public class Main extends Application {
         ComboBox<String> comboBox = new ComboBox<>();
         comboBox.getItems().addAll("dog","cat","bird","mouse","fish","hamster");
         comboBox.setEditable(true);
+
         comboBox.setStyle("-fx-max-width:150;");
+
+        // since i cannot change the css to the nodes i have to create my own cell Value factory
+        comboBox.setCellFactory(param -> new ComboBoxListCell<String>() {{
+            setTextFill(Color.BLACK);
+
+            Background creamBackground = new Background(new BackgroundFill(Color.rgb(183, 184, 180), null, null));
+            Background BlueBackground = new Background(new BackgroundFill(Color.AQUAMARINE, null, null));
+
+            setBackground(creamBackground);
+            setOnMouseEntered(event -> {
+                setBackground(BlueBackground);
+            });
+            setOnMouseExited(event -> {
+                setBackground(creamBackground);
+            });
+        }});
+
+
         TextField signUpUserNameInput = new TextField();
         signUpUserNameInput.setPromptText("Username");
         signUpPassWordInput = new TextField();
@@ -365,6 +391,7 @@ public class Main extends Application {
         label2.setStyle("-fx-fill: FIREBRICK;\n" +
                 "  -fx-font-weight: bold;\n" +
                 "  -fx-effect: dropshadow( gaussian , rgba(255,255,255,0.5) , 0,0,0,1 )");
+//     label2.setId("lab2");
         Hyperlink buttonLogin = new Hyperlink("login");
         buttonLogin.setTextFill(Color.BLACK);
         buttonLogin.setOnAction( e -> startWindow());
@@ -389,7 +416,11 @@ public class Main extends Application {
                 BackgroundPosition.CENTER,
                 bSize));
         layout.setBackground(background);
+
         Scene scene = new Scene(layout,300,300);
+//        scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
+//        String css = this.getClass().getResource("src/main/java/com/example/loginform/application.css").toExternalForm();
+//      scene.getStylesheets().add(css);
         window.setScene(scene);
         window.show();
 
@@ -411,6 +442,10 @@ public class Main extends Application {
                 alert.setTitle("user name alert");
                 alert.setHeaderText(null);
                 alert.setContentText("username already exists");
+                DialogPane dialogPane = alert.getDialogPane();
+                dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                dialogPane.getStyleClass().add("dialogRed");
+
                 alert.show();
 
             }else{
@@ -421,8 +456,11 @@ public class Main extends Application {
                 insert.executeUpdate();
                 Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
                 alert.setTitle("confirmation");
-                alert.setHeaderText(null);
+                alert.setHeaderText("Welcome!");
                 alert.setContentText("user successfully added!!");
+                DialogPane dialogPane = alert.getDialogPane();
+                dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                dialogPane.getStyleClass().add("dialogBlue");
                 alert.show();
 
             }
@@ -490,25 +528,7 @@ public class Main extends Application {
         Stop[] stops = new Stop[] { new Stop(0, Color.ORANGE), new Stop(1, Color.RED)};
         LinearGradient lg1 = new LinearGradient(0, 0, 1, 0, true, CycleMethod.NO_CYCLE, stops);
        labelApp.setTextFill(lg1);
-//        //Instanting the reflection class
-//        Reflection reflection = new Reflection();
-//
-//        //setting the bottom opacity of the reflection
-//        reflection.setBottomOpacity(0.0);
-//
-//        //setting the top opacity of the reflection
-//        reflection.setTopOpacity(0.5);
-//
-//        //setting the top offset of the reflection
-//        reflection.setTopOffset(0.3);
-//
-//        //Setting the fraction of the reflection
-//        reflection.setFraction(0.7);
-        // Create Bloom Effect
-//        Bloom bloom = new Bloom();
-//        // Setting Threshold
-//        bloom.setThreshold(0.8);
-//labelApp.setEffect(bloom);
+
         DropShadow dropShadow = new DropShadow();
         dropShadow.setRadius(5.0);
         dropShadow.setOffsetX(3.0);
@@ -535,19 +555,30 @@ public class Main extends Application {
         fade.setToValue(0.3);
         fade.play();
      topleftBox.getChildren().add(label);
-        ImageView imageView = null;// the cart image
+        ImageView cartImageView = null;// the cart image
         try {
             FileInputStream inputStream = new FileInputStream("src/main/java/Images/cart.png");
           Image image = new Image(inputStream);
-          imageView = new ImageView(image);
+          cartImageView = new ImageView(image);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+        cartImageView.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                if(Objects.equals(name, "tony")){
+                     cartImageClicked();// this will onlu be activated if the user tony entered otherwise the cart image wont do anything when clicked
+                }
+                event.consume();
+            }
+        });
+
+
 
         Button myCartButton = new Button("my cart");
         myCartButton.setOnAction(e -> mycartButtonClicked(name,user));
         HBox.setHgrow(topRightBox, Priority.ALWAYS);//grow with stretching
-        topRightBox.getChildren().addAll(imageView,myCartButton);
+        topRightBox.getChildren().addAll(cartImageView,myCartButton);
         topRightBox.setAlignment(Pos.CENTER_RIGHT);
         topMidBox.setMinWidth(540);
         topMidBox.setAlignment(Pos.CENTER_RIGHT);
@@ -996,7 +1027,13 @@ public class Main extends Application {
         }
         Image image = new Image(contactUsInputStream);
         ImageView contactUsImageView = new ImageView(image);
-
+        contactUsImageView.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+               contactUsWindow(name);
+                event.consume();
+            }
+        });
 
 
 
@@ -1050,7 +1087,7 @@ public class Main extends Application {
                 window.close();
             }
         });
-
+        window.getIcons().add(new Image("file:src/main/java/Images/darkImage.jpg"));
          window.setScene(scene);
         window.show();
 
@@ -1092,31 +1129,24 @@ public class Main extends Application {
         // it extends string cz a am taking a user text input
         // i have old vallue (the field is emty) then the new value the one i entered
         // if the new value matches a decimal set the text to a decimal
-        cartNumInput.textProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observable, String oldValue,
-                                String newValue) {
-                if (!newValue.matches("\\d*")) {
-                    cartNumInput.setText(newValue.replaceAll("[^\\d]", ""));
-                }
-            }
 
-        });
+        forceNumber(cartNumInput);
+
+
         Label pinCodeLabel = new Label("Pin code");
         PasswordField pinCodeInput = new PasswordField();
         pinCodeInput.setPromptText("enter pin code");
-        pinCodeInput.textProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observable, String oldValue,
-                                String newValue) {
-                if (!newValue.matches("\\d*")) {
-                    pinCodeInput.setText(newValue.replaceAll("[^\\d]", ""));
-                }
-            }
-        });
+
+        forceNumber(pinCodeInput);
+
+
         Button button1 = new Button("buy");
         Button button2 = new Button("exit");
         Button button3 = new Button("Save info");
+        button1.setId("bevel-grey");
+        button2.setId("bevel-grey");
+        button3.setId("bevel-grey");
+
         layout.addRow(0,nameLabel,nameInput);
         layout.addRow(1,cityLabel,cityInput);
         layout.addRow(2,dateLabel,datePicker);
@@ -1182,7 +1212,7 @@ public class Main extends Application {
             fields.add(cartNumInput);
             fields.add(pinCodeInput);
             boolean empty = false;
-            for(TextField t : fields){
+            for(TextField t : fields){;
                 if(Objects.equals(t.getText(), "")){
                    empty = true;
                    break;
@@ -1190,17 +1220,21 @@ public class Main extends Application {
             }
 
             // continue here
-            for(TextField t : fields){
-             t.setBlendMode(BlendMode.MULTIPLY);
-            }
+//            for(TextField t : fields){
+//            t.setFont(Font.font("Consolas", FontPosture.ITALIC,22));
+//            }
             // i put all fields in an arraylist so that i can search if anyh of those is empty
             // than i add the date picker codition alone because its diffrent to access it than the normal fields
             // in this if i check in any of the fields is emty and i launch a alert
             if(empty || Objects.equals(datePicker.getEditor().getText(), "")){
-                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setContentText("empty field");
                 alert.setHeaderText(null);
                 alert.setContentText("you cannot have an empty field");
+                DialogPane dialogPane = alert.getDialogPane();
+                dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                dialogPane.setId("myDialog");
+
                 alert.showAndWait();
             }else{
                 if(!validEmail(emailInput.getText())){
@@ -1214,6 +1248,8 @@ public class Main extends Application {
                     emailInput.setText("");
                     cartNumInput.setText("");
                     pinCodeInput.setText("");
+
+                    buyWindow.close();
                 }
             }
 
@@ -1247,10 +1283,13 @@ public class Main extends Application {
             // than i add the date picker codition alone because its diffrent to access it than the normal fields
             // in this if i check in any of the fields is emty and i launch a alert
             if(empty || Objects.equals(datePicker.getEditor().getText(), "")){
-                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setContentText("empty field");
                 alert.setHeaderText(null);
                 alert.setContentText("you cannot have an empty field");
+                DialogPane dialogPane = alert.getDialogPane();
+                dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                dialogPane.setId("myDialog");
                 alert.showAndWait();
             }else {
                 if (!validEmail(emailInput.getText())) {
@@ -1272,8 +1311,14 @@ public class Main extends Application {
                 buyWindow.close();
                 }
         );
+        TextField[] texts = new TextField[]{nameInput,emailInput,cityInput,cartNumInput,pinCodeInput};
 
         Scene scene = new Scene(box,300,400);
+        scene.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+       for(TextField f: texts){
+           f.setId("glassField");
+       }
+//       datePicker.setId("glassPicker");
         buyWindow.setScene(scene);
         buyWindow.show();
     }
@@ -1293,16 +1338,21 @@ public class Main extends Application {
             alert.setTitle("valid email");
             alert.setHeaderText(null);
             alert.setContentText("please enter a valid email");
+            DialogPane dialogPane = alert.getDialogPane();
+            dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+            dialogPane.setId("myDialog");
             alert.showAndWait();
 
         }
         return false;
     }
     // HERE I AM ACCESSING THE DATABASE and updating the quantity of an item when we click buy on it
+    // from this method also i will be updating the database for the table (report) where i will be adding to the quantity of items baught for the specific item
      public  void  buyItemButtonClicked(int id){
      PreparedStatement change = null;
      Connection connection = null;
      PreparedStatement checkAvailability = null;
+     PreparedStatement updateReport = null;// report table
      ResultSet availableSet = null;
      // first checkl if the item is in stock if yes then update
          try {
@@ -1317,14 +1367,30 @@ public class Main extends Application {
 
 
           if(ans > 0) {
+              // first i have to update the items and change the quantity then i have to add to report where i add 1 to the quantity sold since this is a button where you only buy one item
               change = connection.prepareStatement("UPDATE items SET quantity = quantity -1 WHERE id = ?;");
               change.setString(1, String.valueOf(id));
               change.executeUpdate();
+             updateReport = connection.prepareStatement("UPDATE report SET quantitySold = quantitySold + 1 WHERE id = ?");
+             updateReport.setInt(1,id);
+             updateReport.executeUpdate();
+              Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+              alert.setHeaderText(null);
+              alert.setTitle("Confirmation");
+              alert.setHeaderText("Confirmation");
+              alert.setContentText("Item successfully purchased thank you for shopping with TonyTech");
+              DialogPane dialogPane = alert.getDialogPane();
+              dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+              dialogPane.getStyleClass().add("dialogBlue");
+              alert.showAndWait();
           }else{
               Alert alert = new Alert(Alert.AlertType.WARNING);
               alert.setTitle("not available");
-              alert.setHeaderText(null);
+              alert.setHeaderText("sorry");
               alert.setContentText("item is not available in stock!!");
+              DialogPane dialogPane = alert.getDialogPane();
+              dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+              dialogPane.setId("myDialog");
               alert.showAndWait();
           }
          } catch (SQLException e) {
@@ -1348,8 +1414,13 @@ public class Main extends Application {
                  } catch (SQLException e) {
                      e.printStackTrace();
                  }
-             }
-             if(connection != null){
+             }if(updateReport != null){
+                 try {
+                     updateReport.close();
+                 } catch (SQLException e) {
+                     e.printStackTrace();
+                 }
+             }if(connection != null){
                  try {
                      connection.close();
                  } catch (SQLException e) {
@@ -1386,6 +1457,9 @@ public class Main extends Application {
                 alert.setTitle("already in cart");
                 alert.setHeaderText(null);
                 alert.setContentText("item already in your cart");
+                DialogPane dialogPane = alert.getDialogPane();
+                dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                dialogPane.setId("myDialog");
                 alert.showAndWait();
             }else {
 
@@ -1411,6 +1485,9 @@ public class Main extends Application {
                         alert.setHeaderText(null);
                         alert.setTitle("confirmation");
                         alert.setContentText("successfully added the item to your cart");
+                        DialogPane dialogPane = alert.getDialogPane();
+                        dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                        dialogPane.getStyleClass().add("dialogBlue");
                         alert.showAndWait();
 
                     }
@@ -1419,6 +1496,9 @@ public class Main extends Application {
                     alert.setHeaderText(null);
                     alert.setTitle("not available");
                     alert.setContentText("item out of stock cannot add to cart!!");
+                    DialogPane dialogPane = alert.getDialogPane();
+                    dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                    dialogPane.setId("myDialog");
                     alert.showAndWait();
                 }
             }
@@ -1560,15 +1640,21 @@ public void mycartButtonClicked(String name,User user){
 //cart button i want to manually search if an item is out of stock
     pauseTimer();
     Stage stage = new Stage();
+    stage.initModality(Modality.APPLICATION_MODAL);
     checkDatabaseStock(name , user);// here i manually make a check and delete from my cart if an item is out of stock
     // now all i have to do is fill the table with my cart values
    if(user.getNamesOutOfStock() != null){
        Alert alert = new Alert(Alert.AlertType.WARNING);
-       alert.setHeaderText(null);
+       alert.setHeaderText("Out Of Stock");
        alert.setTitle("out of stock");
-       alert.setContentText("some items where removed from your cart:\n "+user.getNamesOutOfStock()+"\n Reson: out of stock");
+       alert.setContentText("Items removed");
+       alert.setContentText("some items where removed from your cart:\n "+user.getNamesOutOfStock()+"\n Reason: out of stock");
+       DialogPane dialogPane = alert.getDialogPane();
+       dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+       dialogPane.getStyleClass().add("dialogRed");
        alert.showAndWait();
        user.setNamesOutOfStock(null);
+
    }
     TableView<Products> tableView = new TableView<>();
 
@@ -1594,28 +1680,40 @@ public void mycartButtonClicked(String name,User user){
 
 
     ObservableList<Products> observableListProducts = FXCollections.observableArrayList();
-   getCartData(observableListProducts,name,tableView);
+   getCartData(observableListProducts,name);
    tableView.setItems(observableListProducts);
 tableView.setEditable(true);
     quantityCol.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));// very important this interger converter sinse initially the value int cannot be edited this way when i click on the cell i can update
-quantityCol.setOnEditCommit(new EventHandler<TableColumn.CellEditEvent<Products, Integer>>() {
-    @Override
-    public void handle(TableColumn.CellEditEvent<Products, Integer> event) {
-        Products product = event.getRowValue();
-        int availability = checkAvailableOnEdit( product.getId());
-        if(availability < event.getNewValue()){
-            Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setTitle("availability of items");
-            alert.setHeaderText(null);
-            alert.setContentText("Sorry your chosen value exceed our availability in stock\n" +
-                    "please try to enter another quantity for the  selected item");
-            alert.showAndWait();
-        }else {
-            product.setCartQuantity(event.getNewValue());
-            changeQuantityInCart(name,product.getId(),event.getNewValue());
-        }
-    }
-});
+
+   
+        quantityCol.setOnEditCommit(new EventHandler<TableColumn.CellEditEvent<Products, Integer>>() {
+            @Override
+            public void handle(TableColumn.CellEditEvent<Products, Integer> event) {
+
+                Products product = event.getRowValue();
+                int availability = checkAvailableOnEdit(product.getId());
+
+                if (availability < event.getNewValue()) {
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("availability of items");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Sorry your chosen value exceed our availability in stock\n" +
+                            "please try to enter another quantity for the  selected item");
+                    DialogPane dialogPane = alert.getDialogPane();
+                    dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                    dialogPane.setId("myDialog");
+                    alert.showAndWait();
+                    tableView.refresh();
+                } else {
+                    product.setCartQuantity(event.getNewValue());
+                    changeQuantityInCart(name, product.getId(), event.getNewValue());
+                    tableView.refresh();
+                }
+
+            }
+
+        });
+
 
 
    tableView.getColumns().addAll(typeCol,nameCol,priceCol,idCol,quantityCol);
@@ -1627,10 +1725,15 @@ quantityCol.setOnEditCommit(new EventHandler<TableColumn.CellEditEvent<Products,
                stage.close();
 
        });
+
    VBox layout = new VBox();
+   layout.setId("lay1");
+   layout.setSpacing(4);
 
    HBox topBox = new HBox();
    HBox buttomBox = new HBox();
+   buttomBox.setAlignment(Pos.BOTTOM_LEFT);
+   buttomBox.setSpacing(20);
 
    Text text = new Text("Customer Cart");
    text.setFont(Font.font("Bauhaus 93",32));
@@ -1642,7 +1745,9 @@ quantityCol.setOnEditCommit(new EventHandler<TableColumn.CellEditEvent<Products,
 
    deleteButton.setOnAction( e -> {
        Products product = tableView.getSelectionModel().getSelectedItem();
-       boolean ans = ConfirmBox.display("delete item","Are you sure you want to delete "+product.getName()+" from your cart?");
+       boolean ans = false;
+       if(product != null)
+        ans = ConfirmBox.display("delete item","Are you sure you want to delete "+product.getName()+" from your cart?");
       if(ans) {
           tableView.getItems().remove(product);
           deleteFromCartDB(name,product.getId());// call the function that delete the specific item from the database (cart table)
@@ -1650,16 +1755,22 @@ quantityCol.setOnEditCommit(new EventHandler<TableColumn.CellEditEvent<Products,
    });buyButton.setOnAction( e -> {
       buyButtonFromCartWindow(tableView,name);// open window for buy items to take user detailes
    });
+   buyButton.setId("blue");
+   deleteButton.setId("blue");
+
+   buttomBox.setMinWidth(90);
    buttomBox.getChildren().addAll(buyButton,deleteButton);
   layout.getChildren().addAll(topBox,tableView,buttomBox);
 
-   Scene scene = new Scene(layout,600,600);
-   stage.setScene(scene);
+   Scene scene = new Scene(layout,600,480);
+//    System.out.println("classpath=" + System.getProperty("java.class.path"));
+    scene.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+    stage.setScene(scene);
    stage.show();
     }
 // this method is called from the button cart where i will be getting the data of the cart from database
 // this data will be added to an oobserrvable list wich will be user to fill the tableview in my cart
-    public void getCartData(ObservableList<Products> observableListProducts, String name,TableView<Products> table) {
+    public void getCartData(ObservableList<Products> observableListProducts, String name) {
     Connection connection = null;
     PreparedStatement getItems = null;
     ResultSet resultSet = null;
@@ -1719,15 +1830,99 @@ quantityCol.setOnEditCommit(new EventHandler<TableColumn.CellEditEvent<Products,
                     private final Button btn = new Button("Edit");
 
                     {
+                        btn.styleProperty().bind(Bindings.when(btn.hoverProperty())
+                                .then(" -fx-background-color:\n" +
+                                        "        linear-gradient(#4977f5, #023dde),\n" +
+                                        "        radial-gradient(center 50% -40%, radius 200%, #3c5cfa 45%,#0422b5 50%);\n" +
+                                        "    -fx-background-radius: 6, 5;\n" +
+                                        "    -fx-background-insets: 0, 1;\n" +
+                                        "    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.4) , 5, 0.0 , 0 , 1 );\n" +
+                                        "   -fx-text-fill: white;\n" +
+                                        "    -fx-font-size: 12px;\n" +
+                                        "    -fx-font-weight:bold;")
+                                .otherwise(" -fx-background-color:\n" +
+                                        "        linear-gradient(#4977f5, #023dde),\n" +
+                                        "        radial-gradient(center 50% -40%, radius 200%, #3c5cfa 45%,#0422b5 50%);\n" +
+                                        "    -fx-background-radius: 6, 5;\n" +
+                                        "    -fx-background-insets: 0, 1;\n" +
+                                        "    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.4) , 5, 0.0 , 0 , 1 );\n" +
+                                        "    -fx-text-fill: #ebf5d7;"));
                         btn.setOnAction((ActionEvent event) -> {
                             Products data = getTableView().getItems().get(getIndex());
                            Stage stage = new Stage();
+                           stage.initModality(Modality.APPLICATION_MODAL);
                            VBox layout = new VBox();
+                           layout.setBackground(new Background(new BackgroundFill(Color.ORANGE,null,null)));
                            Label label = new Label("set Quantity for \n"+data.getName());
+                           label.setStyle("-fx-font-family:Copperplate Gothic Bold;\n"+
+                                   "-fx-text-fill:white;\n"+
+                                   "-fx-font-style:italic;\n"+
+                                   "-fx-text-alignment: center;\n"+
+                                   "-fx-font-weight:bold");
                            Button button1 = new Button("save");
-                           Button button2 = new Button("exit");
+                            Button button2 = new Button("exit");
 
-                           button2.setOnAction( e-> stage.close());
+
+                               button2.styleProperty().bind(Bindings.when(button1.hoverProperty()).
+                                       then(" -fx-background-color: \n" +
+                                               "        #090a0c,\n" +
+                                               "        linear-gradient(#3f505e 0%, #14181c 20%, #20262e 100%),\n" +
+                                               "        linear-gradient(#222a30, #14171c),\n" +
+                                               "        radial-gradient(center 50% 0%, radius 100%, rgba(131, 150, 168,0.9), rgba(255,255,255,0));\n" +
+                                               "    -fx-background-radius: 5,4,3,5;\n" +
+                                               "    -fx-background-insets: 0,1,2,0;\n" +
+                                               "    -fx-text-fill: white;\n" +
+                                               "    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.7) , 5, 0.0 , 0 , 1 );\n" +
+                                               "    -fx-font-family: \"Arial\";\n" +
+                                               "    -fx-text-fill: linear-gradient(white, #d0d0d0);\n" +
+                                               "    -fx-font-size: 12px;\n" +
+                                               "    -fx-padding: 6 15 6 15;\n" +
+                                               "-fx-effect: dropshadow( one-pass-box , rgba(0,0,0,0.9) , 1, 0.0 , 0 , 1 );").
+                                       otherwise(" -fx-background-color: \n" +
+                                               "        #090a0c,\n" +
+                                               "        linear-gradient(#38424b 0%, #1f2429 20%, #191d22 100%),\n" +
+                                               "        linear-gradient(#20262b, #191d22),\n" +
+                                               "        radial-gradient(center 50% 0%, radius 100%, rgba(114,131,148,0.9), rgba(255,255,255,0));\n" +
+                                               "    -fx-background-radius: 5,4,3,5;\n" +
+                                               "    -fx-background-insets: 0,1,2,0;\n" +
+                                               "    -fx-text-fill: white;\n" +
+                                               "    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.6) , 5, 0.0 , 0 , 1 );\n" +
+                                               "    -fx-font-family: \"Arial\";\n" +
+                                               "    -fx-text-fill: linear-gradient(white, #d0d0d0);\n" +
+                                               "    -fx-font-size: 12px;\n" +
+                                               "    -fx-padding: 10 20 10 20;"));
+
+
+                            button1.styleProperty().bind(Bindings.when(button2.hoverProperty()).
+                                    then(" -fx-background-color: \n" +
+                                            "        #090a0c,\n" +
+                                            "        linear-gradient(#3f505e 0%, #14181c 20%, #20262e 100%),\n" +
+                                            "        linear-gradient(#222a30, #14171c),\n" +
+                                            "        radial-gradient(center 50% 0%, radius 100%, rgba(131, 150, 168,0.9), rgba(255,255,255,0));\n" +
+                                            "    -fx-background-radius: 5,4,3,5;\n" +
+                                            "    -fx-background-insets: 0,1,2,0;\n" +
+                                            "    -fx-text-fill: white;\n" +
+                                            "    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.7) , 5, 0.0 , 0 , 1 );\n" +
+                                            "    -fx-font-family: \"Arial\";\n" +
+                                            "    -fx-text-fill: linear-gradient(white, #d0d0d0);\n" +
+                                            "    -fx-font-size: 12px;\n" +
+                                            "    -fx-padding: 6 15 6 15;\n" +
+                                            "-fx-effect: dropshadow( one-pass-box , rgba(0,0,0,0.9) , 1, 0.0 , 0 , 1 );").
+                                    otherwise(" -fx-background-color: \n" +
+                                            "        #090a0c,\n" +
+                                            "        linear-gradient(#38424b 0%, #1f2429 20%, #191d22 100%),\n" +
+                                            "        linear-gradient(#20262b, #191d22),\n" +
+                                            "        radial-gradient(center 50% 0%, radius 100%, rgba(114,131,148,0.9), rgba(255,255,255,0));\n" +
+                                            "    -fx-background-radius: 5,4,3,5;\n" +
+                                            "    -fx-background-insets: 0,1,2,0;\n" +
+                                            "    -fx-text-fill: white;\n" +
+                                            "    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.6) , 5, 0.0 , 0 , 1 );\n" +
+                                            "    -fx-font-family: \"Arial\";\n" +
+                                            "    -fx-text-fill: linear-gradient(white, #d0d0d0);\n" +
+                                            "    -fx-font-size: 12px;\n" +
+                                            "    -fx-padding: 10 20 10 20;"));
+
+                            button2.setOnAction( e-> stage.close());
                            Spinner<Integer> spinner = new Spinner<>(1,20,1);
                            spinner.setEditable(false);
                             button1.setOnAction( e -> {
@@ -1738,20 +1933,30 @@ quantityCol.setOnEditCommit(new EventHandler<TableColumn.CellEditEvent<Products,
                                     alert.setHeaderText(null);
                                     alert.setContentText("Sorry your chosen value exceed our availability in stock\n" +
                                             "please try to enter another quantity for the  selected item");
+                                    DialogPane dialogPane = alert.getDialogPane();
+                                    dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                                    dialogPane.setId("myDialog");
                                     alert.showAndWait();
                                 }else{
-                                    data.setCartQuantity(spinner.getValue());
-                                   changeQuantityInCart(name,data.getId(),spinner.getValue());
+                                    Products product = getTableView().getItems().get(getIndex());
+                                    product.setCartQuantity(spinner.getValue());
+                                    getTableView().refresh();
+                                   changeQuantityInCart(name,product.getId(),spinner.getValue());
                                    stage.close();
                                 }
                             });
+                            btn.setId("smallBlue");
                            HBox hBox = new HBox();
+                           hBox.setAlignment(Pos.CENTER);
+                           hBox.setSpacing(10);
                            hBox.getChildren().addAll(button1,button2);
                            layout.getChildren().addAll(label,spinner,hBox);
                            layout.setSpacing(10);
                            layout.setAlignment(Pos.CENTER);
+                           layout.setStyle("-fx-background-color:#040b1c");
                            Scene scene = new Scene(layout,200,200);
-                          stage.initModality(Modality.APPLICATION_MODAL);
+                            scene.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                            stage.initModality(Modality.APPLICATION_MODAL);
                            stage.setScene(scene);
                            stage.show();
 
@@ -1911,6 +2116,7 @@ return ans;
        PreparedStatement checkAvailability = null;// in one query i will search  for availability and return the names of items that are not available in the quantity ordered
        PreparedStatement updateData = null;
        ResultSet getItemsSet = null;
+       PreparedStatement updateReport = null;// this will work if the data is accepted (ie the items will be purchased then we have to update the report to add the quantity for the items purchased in report )
        String ans = "";// this will hold the name / if there is of the items that are not available
         try {
             connection = DriverManager.getConnection(url,username,mypassword);
@@ -1920,22 +2126,33 @@ return ans;
                     "(\n" +
                     "    SELECT * FROM items,cart\n" +
                     "    WHERE items.id = cart.cartId\n" +
-                    "    AND userName = ? \n" +
+                    "    AND userName = ?\n" +
                     ") AS t\n" +
                     ") AS t2 WHERE isAvailable < 0);");
             checkAvailability.setString(1,name);
             getItemsSet = checkAvailability.executeQuery();
-            if(getItemsSet.next()){
-                ans += getItemsSet.getString(1)+" ";
-            }else {
+            StringBuilder resultText = new StringBuilder();
+
+                   while (getItemsSet.next()) {
+                       resultText.append(getItemsSet.getString(1)).append(" ,");
+                   }
+                   if(!resultText.isEmpty())
+                   ans = resultText.toString();
+
+           if(ans.equals("")) {//  if the result set was empty that means that no items exeed the quantity asked for by the user therefore i can use this other query to update now the items table where i will be updating all the quantiy in items - quantity asked by the user for the specific items in his card
                 updateData = connection.prepareStatement("UPDATE items INNER JOIN cart ON (items.id = cart.cartId)\n" +
                         "SET items.quantity = items.quantity-cart.cartQuantity\n" +
                         "WHERE cart.userName = ? ;");
             updateData.setString(1,name);
             updateData.executeUpdate();
-            updateData = connection.prepareStatement("DELETE FROM cart WHERE userName = ?;");
-           updateData.setString(1,name);
-           updateData.executeUpdate();
+            updateReport = connection.prepareStatement("UPDATE report INNER JOIN cart ON (report.id = cart.cartId)\n" +
+                    "SET report.quantitySold =report.quantitySold + cart.cartQuantity\n" +
+                    "WHERE cart.userName = ? ;");
+            updateReport.setString(1,name);
+            updateReport.executeUpdate(); // in case the items are actually purchase add to my report the number of items for those specific items
+                updateData = connection.prepareStatement("DELETE FROM cart WHERE userName = ?;");
+                updateData.setString(1,name);
+                updateData.executeUpdate();// after doing all my updates now i have to delete the data from cart table that are related to the user because he actually purchased those items
             }
 
         } catch (SQLException e) {
@@ -1959,7 +2176,14 @@ return ans;
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-            }if(connection != null){
+            }if(updateReport != null){
+                try {
+                    updateReport.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(connection != null){
                 try {
                     connection.close();
                 } catch (SQLException e) {
@@ -1967,10 +2191,12 @@ return ans;
                 }
             }
         }
+
         return  ans;
     }
     public void buyButtonFromCartWindow(TableView<Products> tableView ,String name){
         Stage buyWindow = new Stage();
+        buyWindow.initModality(Modality.APPLICATION_MODAL);
         GridPane layout = new GridPane();
         Label nameLabel = new Label("Name");
         TextField nameInput = new TextField();
@@ -2028,6 +2254,9 @@ return ans;
         Button button1 = new Button("buy");
         Button button2 = new Button("exit");
         Button button3 = new Button("Save info");
+        button1.setId("bevel-grey");
+        button2.setId("bevel-grey");
+        button3.setId("bevel-grey");
         layout.addRow(0,nameLabel,nameInput);
         layout.addRow(1,cityLabel,cityInput);
         layout.addRow(2,dateLabel,datePicker);
@@ -2070,6 +2299,9 @@ return ans;
                 alert.setContentText("empty field");
                 alert.setHeaderText(null);
                 alert.setContentText("you cannot have an empty field");
+                DialogPane dialogPane = alert.getDialogPane();
+                dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                dialogPane.setId("myDialog");
                 alert.showAndWait();
             }else{
                 if(!validEmail(emailInput.getText())){
@@ -2080,8 +2312,11 @@ return ans;
                    if(ans.equals("")){// then no items are unavailable (no items returned)(check the method)
                       Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
                       alert.setTitle("confirm");
-                      alert.setHeaderText(null);
-                      alert.setContentText("Thank you for using TonyTech. items successfully purchased. Shipment to your place might take from 2 to 7 days");
+                      alert.setHeaderText("Thank you for using TonyTech.");
+                      alert.setContentText("items successfully purchased. Shipment to your place might take from 2 to 7 days");
+                       DialogPane dialogPane = alert.getDialogPane();
+                       dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                       dialogPane.getStyleClass().add("dialogBlue");
                      alert.showAndWait();
                      tableView.getItems().clear();
                      buyWindow.close();
@@ -2090,8 +2325,11 @@ return ans;
                        Alert alert = new Alert(Alert.AlertType.WARNING);
                        alert.setTitle("items unavailable");
                        alert.setHeaderText(null);
-                       alert.setContentText("Items below exeed our availability in store:\n"+ans+"\n"+"" +
+                       alert.setContentText("Items below exceed our availability in store:\n"+ans+"\n"+"" +
                                "please change the quantity for those items");
+                       DialogPane dialogPane = alert.getDialogPane();
+                       dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                       dialogPane.setId("myDialog");
                        alert.showAndWait();
                    }
                     nameInput.setText("");
@@ -2138,6 +2376,9 @@ return ans;
                         alert.setContentText("empty field");
                         alert.setHeaderText(null);
                         alert.setContentText("you cannot have an empty field");
+                        DialogPane dialogPane = alert.getDialogPane();
+                        dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                        dialogPane.setId("myDialog");
                         alert.showAndWait();
                     }else {
                         if (!validEmail(emailInput.getText())) {
@@ -2159,7 +2400,49 @@ return ans;
                         buyWindow.close();
                 }
         );
-        Scene scene = new Scene(box,400,600);
+
+        ArrayList<Label> labels = new ArrayList<>();
+        labels.add(nameLabel);
+        labels.add(cartNumLabel);
+        labels.add(cityLabel);
+        labels.add(dateLabel);
+        labels.add(emailLabel);
+        labels.add(pinCodeLabel);
+
+
+
+        for(Label label : labels){
+            label.setFont(Font.font("Copperplate Gothic Bold",15));
+            label.setStyle("-fx-fill: red;\n" +
+                    "  -fx-font-weight: bold;\n" +
+                    "  -fx-effect: dropshadow( gaussian , rgb(255, 255, 255) , 0,0,0,1 )");
+
+        }
+
+        InputStream inputStream = null;
+        try {
+            inputStream = new FileInputStream("src/main/java/Images/darkImage2.jpg");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        Image image = new Image(inputStream);
+
+        BackgroundSize bSize = new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, true, true);//double width, double height, boolean widthAsPercentage, boolean heightAsPercentage, boolean contain, boolean cover
+        Background background = new Background(new BackgroundImage(image,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                bSize));
+        box.setBackground(background);
+        TextField[] texts = new TextField[]{nameInput,emailInput,cartNumInput,cityInput,pinCodeInput};
+
+
+        Scene scene = new Scene(box,300,400);
+        scene.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+        for(TextField t: texts){
+            t.setId("glassField");
+        }
+
         buyWindow.setScene(scene);
         buyWindow.show();
     }
@@ -2277,6 +2560,483 @@ return ans;
 
     }
 
+    // this window will be called when the user click on the contact us pic
+    // i will open a window showing the contact numbers
+    public void contactUsWindow(String name){
+        Stage stage = new Stage();
+        stage.initModality(Modality.APPLICATION_MODAL);
+        GridPane gridPane = new GridPane();
+        Label city = new Label("City");
+        Label landLine = new Label("Land line");
+        Label other = new Label("other");
+        Label dora = new Label("Dora");
+        Label landLineDora = new Label("01/314111");
+        Label otherDora = new Label("76/535434");
+        Label beirut = new Label("Beirut");
+        Label landLineBeirut = new Label("01/342111");
+        Label otherBeirut = new Label("70/708763");
+        Label junieh = new Label("Junieh");
+        Label landLinejunieh = new Label("01/331111");
+        Label otherjunieh = new Label("79/796546");
+        gridPane.addRow(1,city,landLine,other);
+        gridPane.addRow(2,dora,landLineDora,otherDora);
+        gridPane.addRow(3,beirut,landLineBeirut,otherBeirut);
+        gridPane.addRow(4,junieh,landLinejunieh,otherjunieh);
+        gridPane.setAlignment(Pos.CENTER);
+        gridPane.setHgap(30);
+        gridPane.setVgap(20);
+        HBox hbox = new HBox();
+        VBox layout = new VBox();
+       Label label = new Label("Or email us at:");
+       Hyperlink link = new Hyperlink("TonyTech@outlook.com");
+        hbox.getChildren().addAll(label,link);
+        layout.setSpacing(70);
+        layout.setStyle("-fx-background-color:#010e24;");
+        Label[] labels = new Label[]{city,landLine,other,dora,landLineDora,otherDora,beirut,landLineBeirut,otherBeirut,junieh,landLinejunieh,otherjunieh,label};
+        for(Label l : labels){
+            l.setFont(Font.font("Copperplate Gothic Bold",15));
+            l.setStyle("-fx-text-fill: white;\n" +
+                    "  -fx-font-weight: bold;\n" +
+                    "  -fx-effect: dropshadow( gaussian , rgb(8, 7, 7) , 0,0,0,1 )");
+
+        }
+        layout.getChildren().addAll(gridPane,hbox);
+
+        Scene scene = new Scene(layout,350,300);
+        stage.setScene(scene);
+        stage.showAndWait();
+
+    }
+
+    // this table view will be a lot similar to the one i am using for the user to get cart data
+    // the only diffrence here is i will be showing the data from all items not from the cart table
+    //this will only be shown to the user tony who is admin
+    // this is a hidden feature that only tony can acess the stock
+    public void cartImageClicked(){
+        Stage stage = new Stage();
+        stage.initModality(Modality.APPLICATION_MODAL);
+        TableView<Stock> stockTableView = new TableView<>();
+
+        TableColumn<Stock,String> typeCol = new TableColumn<>("Type");
+        typeCol.setMinWidth(100);
+        typeCol.setCellValueFactory(new PropertyValueFactory<>("type"));
+
+        TableColumn<Stock,String> nameCol = new TableColumn<>("Name");
+        nameCol.setMinWidth(100);
+        nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+
+        TableColumn<Stock,Double> priceCol = new TableColumn<>("Price");
+        priceCol.setMinWidth(100);
+        priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
+
+        TableColumn<Stock, Integer> idCol = new TableColumn<>("ID");
+        idCol.setMinWidth(100);
+        idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
+
+        TableColumn<Stock, Integer> quantityCol = new TableColumn<>("Quantity");
+        quantityCol.setMinWidth(100);
+        quantityCol.setCellValueFactory(new PropertyValueFactory<>("stockQuantity"));
+        stockTableView.getColumns().addAll(typeCol,nameCol,priceCol,idCol,quantityCol);
+        ObservableList<Stock> observableListStock = FXCollections.observableArrayList();
+        getStockData(observableListStock);// this method will interract with the database and return the resultset as a observable list holding the data of all the items in the stock
+       stockTableView.setItems(observableListStock);
+        stockTableView.setEditable(true);
+        quantityCol.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));// very important this interger converter sinse initially the value int cannot be edited this way when i click on the cell i can update
+        quantityCol.setOnEditCommit(new EventHandler<TableColumn.CellEditEvent<Stock, Integer>>() {
+                                        @Override
+                                        public void handle(TableColumn.CellEditEvent<Stock, Integer> event) {
+                                            Stock stock = event.getRowValue();
+                                             stock.setStockQuantity(event.getNewValue());// this to update the quantity column in the table when commit
+                                            updateQuantityInStock(stock.getId(),event.getNewValue());// update the quantity of item in the items table in the database
+                                        }
+        });
+
+       Label label = new Label("Stock items");
+        label.setFont(Font.font("Bauhaus 93",32));
+        label.setTextFill(Color.BLACK);
+       HBox topleftBox = new HBox();
+       topleftBox.getChildren().add(label);
+       topleftBox.setAlignment(Pos.CENTER_LEFT);
+       HBox topRightBox = new HBox();
+       Button getReportButton = new Button("report");
+      getReportButton.setId("smallBlue");
+
+
+       topRightBox.getChildren().add(getReportButton);
+       topRightBox.setAlignment(Pos.CENTER_RIGHT);
+     topRightBox.setMinWidth(340);
+
+       HBox topBox= new HBox();
+       topBox.getChildren().addAll(topleftBox,topRightBox);
+
+       VBox layout = new VBox();
+       layout.getChildren().addAll(topBox,stockTableView);
+
+       GridPane gridPane = new GridPane();
+       Label typeLabel = new Label("Type");
+       typeLabel.setId("labels");
+       TextField typeField = new TextField();
+       typeField.setId("field");
+
+       Label nameLabel = new Label("Name");
+        nameLabel.setId("labels");
+       TextField nameField = new TextField();
+        nameField.setId("field");
+
+        Label priceLabel = new Label("Price");
+        priceLabel.setId("labels");
+        TextField priceField = new TextField();
+        priceField.setId("field");
+
+        Label idLabel = new Label("Id");
+        idLabel.setId("labels");
+        TextField idField = new TextField();
+        idField.setId("field");
+
+        Label quantityLabel = new Label("Quantity");
+        quantityLabel.setId("labels");
+        TextField quantityField = new TextField();
+        quantityField.setId("field");
+
+        forceNumber(idField);// those method call till call a method that will force the input to be only numbers
+        forceNumber(quantityField);
+        forceNumber(priceField);
+
+
+
+        Button addButton = new Button("Add item");
+
+
+        addButton.setId("blue");
+
+
+        addButton.setOnAction( e -> {
+            if(typeField.getText().isEmpty() || nameField.getText().isEmpty()
+            ||priceField.getText().isEmpty()||idField.getText().isEmpty()||typeField.getText().isEmpty()||quantityField.getText().isEmpty()){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setHeaderText(null);
+                alert.setTitle("empty field");
+                alert.setContentText("You cannot have an empty field!!");
+                DialogPane dialogPane = alert.getDialogPane();
+                dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                dialogPane.setId("myDialog");
+                alert.showAndWait();
+            }else {
+                Stock stock = new Stock(typeField.getText(),nameField.getText(),Double.parseDouble(priceField.getText()),Integer.parseInt(idField.getText()),Integer.parseInt(quantityField.getText()));
+                stockTableView.getItems().add(stock);
+                // i am only doing this above to update the table in real time for the user to see the update
+                // this will be only for the user to see . an alternative way would be to call the method that search the database and give me back an observable list
+                // after updating the database and adding this item , however this is totally unessesary
+                // and i would be calling a database method for only the purpose of making the user to see the update in real time , therefore i updated the table on click of the add button then the databse will be called when opening the cart pic again so the table will be then updating from the databse itself
+                addItemToStock(typeField.getText(), nameField.getText(),
+                        priceField.getText(), idField.getText(), quantityField.getText());
+                 typeField.clear();
+                 nameField.clear();
+                 idField.clear();
+                 priceField.clear();
+                 quantityField.clear();
+            }
+            });
+
+        gridPane.addRow(1,typeLabel,typeField,nameLabel,nameField);
+        gridPane.addRow(2,priceLabel,priceField,idLabel,idField);
+        gridPane.addRow(3,quantityLabel,quantityField);
+        GridPane.setConstraints(addButton,3,3);
+        gridPane.getChildren().addAll(addButton);
+
+        gridPane.setHgap(10);
+        gridPane.setVgap(20);
+        layout.setSpacing(20);
+
+        layout.setStyle("-fx-background-color:darkblue;");
+        layout.getChildren().add(gridPane);
+
+
+
+        Scene scene = new Scene(layout,502,480);
+        scene.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+
+        stage.setScene(scene);
+       stage.show();
+
+        getReportButton.setOnAction( e -> {
+           reportButtonClicked(scene,stage);// this method will return a scene so it will be used to switch between it and the current scene( whish is the table of items)
+
+        });
+
+    }
+    public void getStockData(ObservableList<Stock> list){
+        Connection connection = null;
+        PreparedStatement fetch = null;
+        ResultSet resultSet = null;
+
+        try {
+            connection = DriverManager.getConnection(url,username,mypassword);
+            fetch = connection.prepareStatement("SELECT * FROM items;");
+            resultSet = fetch.executeQuery();
+            while(resultSet.next()){
+                list.add(new Stock(resultSet.getString(1),resultSet.getString(2),resultSet.getDouble(3),resultSet.getInt(4),resultSet.getInt(5)));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }finally {
+            if(fetch != null){
+                try {
+                    fetch.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }if(resultSet != null){
+                try {
+                    resultSet.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }if(connection != null){
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+    }
+
+    // this method is used to force a field to be numbers only
+    //if the input ie: new value does not match a number then the text is replaced with empty string hense you are obliged to enter a number in the given field
+    public void forceNumber(TextField t){
+        t.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue,
+                                String newValue) {
+                if (!newValue.matches("\\d*")) {
+                    t.setText(newValue.replaceAll("[^\\d]", ""));
+                }
+            }
+
+        });
+    }
+
+    // this method is called when the addItem button on the cartImage is clicked (by the admin)
+    // we will use this method to access the database and add items to it(items table)
+
+    public void addItemToStock(String type , String name ,String price, String id , String quantity  ){
+        Connection connection = null;
+        PreparedStatement addItem = null;
+
+        try {
+            connection = DriverManager.getConnection(url,username,mypassword);
+            addItem = connection.prepareStatement("INSERT INTO items VALUES (?,?,?,?,?)");
+            addItem.setString(1,type);
+            addItem.setString(2,name);
+            addItem.setDouble(3,Double.parseDouble(price));
+            addItem.setInt(4,Integer.parseInt(id));
+            addItem.setDouble(5,Double.parseDouble(quantity));
+            addItem.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }finally {
+            if(addItem != null){
+                try {
+                    addItem.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }if(connection != null){
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+    }
+    public  void updateQuantityInStock(int id , int newValue){
+        Connection connection =null;
+        PreparedStatement updateItem = null;
+
+        try {
+            connection = DriverManager.getConnection(url,username,mypassword);
+           updateItem = connection.prepareStatement("UPDATE items SET quantity = ? WHERE id = ?");
+           updateItem.setInt(1,newValue);
+           updateItem.setInt(2,id);
+           updateItem.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }finally {
+            if(updateItem != null){
+                try {
+                    updateItem.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }if(connection != null){
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+
+    }
+    public  void reportButtonClicked(Scene scene1,Stage stage){
+        TableView<Report> reportTableView = new TableView<>();
+
+        TableColumn<Report,String> typeCol = new TableColumn<>("Type");
+        typeCol.setMinWidth(100);
+        typeCol.setCellValueFactory(new PropertyValueFactory<>("type"));
+
+        TableColumn<Report,String> nameCol = new TableColumn<>("Name");
+        nameCol.setMinWidth(100);
+        nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+
+        TableColumn<Report,Double> priceCol = new TableColumn<>("Price");
+        priceCol.setMinWidth(100);
+        priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
+
+        TableColumn<Report, Integer> idCol = new TableColumn<>("ID");
+        idCol.setMinWidth(100);
+        idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
+
+        TableColumn<Report, Integer> quantityCol = new TableColumn<>("Quantity Sold");
+        quantityCol.setMinWidth(100);
+        quantityCol.setCellValueFactory(new PropertyValueFactory<>("quantitySold"));
+
+        reportTableView.getColumns().addAll(typeCol,nameCol,priceCol,idCol,quantityCol);
+        ObservableList<Report> observableListStock = FXCollections.observableArrayList();
+        getReportData(observableListStock);// this method will interract with the database and return the resultset as a observable list holding the data of all the items in the report table
+       reportTableView.setItems(observableListStock);
+
+       Button returnButton = new Button("Return");
+       Button printButton = new Button("Print");
+       printButton.setId("blue");
+       returnButton.setId("blue");
+       HBox topBox = new HBox();
+       Label label = new Label("Report for sold items");
+        label.setFont(Font.font("Bauhaus 93",32));
+       label.setTextFill(Color.BLACK);
+
+       topBox.getChildren().add(label);
+
+       HBox buttomBox = new HBox();
+       buttomBox.getChildren().addAll(returnButton,printButton);
+       VBox layout = new VBox();
+       layout.setStyle("-fx-background-color:darkblue;");
+       layout.getChildren().addAll(topBox,reportTableView,buttomBox);
+       Scene scene = new Scene(layout,502,480);
+        scene.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+
+        returnButton.setOnAction( e -> {
+         stage.setScene(scene1);
+         stage.show();
+      });
+        printButton.setOnAction( e -> {
+            printReport();
+        });
+    stage.setScene(scene);
+    stage.show();
+
+    }
+    // this method will search the database to get me the report of items and quantity sold
+    // for each item , this report will be added in a observable list that will be
+    // used to fill the report table when u enter the app as the admin (tony with pass: 123)
+  public  void getReportData(ObservableList<Report> observableList){
+        Connection connection = null;
+        PreparedStatement getData = null;
+        ResultSet resultSet = null;
+
+      try {
+          connection = DriverManager.getConnection(url,username,mypassword);
+         getData = connection.prepareStatement("SELECT * FROM report;");
+         resultSet = getData.executeQuery();
+         while(resultSet.next()){
+             observableList.add(new Report(resultSet.getString(1),resultSet.getString(2),Double.parseDouble(resultSet.getString(3)),Integer.parseInt(resultSet.getString(4)),Integer.parseInt(resultSet.getString(5))));
+         }
+      } catch (SQLException e) {
+          e.printStackTrace();
+      }finally {
+          if(getData != null){
+              try {
+                  getData.close();
+              } catch (SQLException e) {
+                  e.printStackTrace();
+              }
+          }if(resultSet != null){
+              try {
+                  resultSet.close();
+              } catch (SQLException e) {
+                  e.printStackTrace();
+              }
+          }if(connection != null){
+              try {
+                  connection.close();
+              } catch (SQLException e) {
+                  e.printStackTrace();
+              }
+          }
+      }
+
+  }
+
+  // in this method we are going to get the data from the databse of the report (from the report table ) and we will print this report to an external file on my laptop
+
+  public void  printReport(){
+      Connection connection = null;
+      PreparedStatement getReportData = null;
+      ResultSet dataSet = null;
+      String reportResult ="";
+      try {
+          connection = DriverManager.getConnection(url,username,mypassword);
+          getReportData = connection.prepareStatement("SELECT * FROM report;");
+          dataSet = getReportData.executeQuery();
+          while (dataSet.next()){
+              reportResult += "type: "+dataSet.getString(1)+" - name: "+dataSet.getString(2)+" - price: "+dataSet.getDouble(3)+" - id: "+dataSet.getInt(4)+" -quantity sold: "+dataSet.getInt(5)+"\r\n";
+          }
+      } catch (SQLException e) {
+          e.printStackTrace();
+      }finally {
+          if(getReportData != null){
+              try {
+                  getReportData.close();
+              } catch (SQLException e) {
+                  e.printStackTrace();
+              }
+          }if(dataSet != null){
+              try {
+                  dataSet.close();
+              } catch (SQLException e) {
+                  e.printStackTrace();
+              }
+          }if(connection != null){
+              try {
+                  connection.close();
+              }catch (SQLException e){
+                  e.printStackTrace();
+              }
+          }
+      }
+      // now after getting the info we will print those to the file
+     // first i get the timeStamp exactly at the time of printing the document
+      String timeStamp = new SimpleDateFormat("yyyy/MM/dd_HH:mm:ss").format(Calendar.getInstance().getTime());
+     String ans = "this report was printed at : " +timeStamp + "\r\n"+ reportResult;
+      // now i will print this result to the file on my pc
+     // using the fileWriter method
+      System.out.println(ans);
+
+      try (FileWriter f = new FileWriter("/users/Toshiba/Desktop/report.txt", true);
+           BufferedWriter b = new BufferedWriter(f);
+           PrintWriter p = new PrintWriter(b);) {
+          p.println(ans);
+
+      } catch (IOException i) {
+          i.printStackTrace();
+      }
+
+  }
     public static void main(String[] args) {
 
         launch();
