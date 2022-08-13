@@ -36,15 +36,20 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
+import javafx.util.StringConverter;
 import javafx.util.converter.IntegerStringConverter;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.sql.*;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -56,6 +61,8 @@ public class Main extends Application {
    private static  TextField startWindowPassInput;
    private Timer timer;
    private TimerTask task;
+   private static String fromDate;
+   private static String toDate;
 
 
 
@@ -160,7 +167,7 @@ public class Main extends Application {
 //        Hyperlink button = new Hyperlink("Some text");
 //        button.setOnAction(e -> System.out.println("Hyperlink clicked"));
         button.setPadding(new Insets(1,10,10,10));
-        loginButton.setOnAction(e -> loginButtonClicked(startWindowUserNameInput.getText(),startWindowPassInput.getText()));
+        loginButton.setOnAction(e -> loginButtonClicked(startWindowUserNameInput.getText()));
         //sign up button
         //this button will open a new window to take user info to sign up as a user
         button.setOnAction(e -> signUpButtonClicked());
@@ -196,7 +203,7 @@ public class Main extends Application {
 
     }
     // after you suxessfully login
-    public void loginButtonClicked(String name ,String password){
+    public void loginButtonClicked(String name){
         ResultSet nameResultSet = null;
         ResultSet passResultSet = null;
         PreparedStatement checkUserExists = null;
@@ -1115,7 +1122,6 @@ public class Main extends Application {
         TextField cartNumInput = new TextField();
         cartNumInput.setPromptText("Visa card number");
         ObservableList<Info> infoObservableList = getInfoFromDB(name);// i am storing the data comming from this method call as an observable list(data is comming from the database) and i will give this data to the fields
-
         if(!infoObservableList.isEmpty()){// if i have a list it means the user already saved his info so then i will fill those fields with the saved info
             nameInput.setText(infoObservableList.get(0).getName());
             emailInput.setText(infoObservableList.get(0).getEmail());
@@ -1349,10 +1355,10 @@ public class Main extends Application {
     // HERE I AM ACCESSING THE DATABASE and updating the quantity of an item when we click buy on it
     // from this method also i will be updating the database for the table (report) where i will be adding to the quantity of items baught for the specific item
      public  void  buyItemButtonClicked(int id){
+        PreparedStatement insertToDateReport = null;
      PreparedStatement change = null;
      Connection connection = null;
      PreparedStatement checkAvailability = null;
-     PreparedStatement updateReport = null;// report table
      ResultSet availableSet = null;
      // first checkl if the item is in stock if yes then update
          try {
@@ -1371,9 +1377,16 @@ public class Main extends Application {
               change = connection.prepareStatement("UPDATE items SET quantity = quantity -1 WHERE id = ?;");
               change.setString(1, String.valueOf(id));
               change.executeUpdate();
-             updateReport = connection.prepareStatement("UPDATE report SET quantitySold = quantitySold + 1 WHERE id = ?");
-             updateReport.setInt(1,id);
-             updateReport.executeUpdate();
+
+
+             // add to dateReport here
+              java.sql.Date sqlDate = new java.sql.Date(new java.util.Date().getTime());
+              insertToDateReport = connection.prepareStatement("INSERT INTO dateReport VALUES (?,?,?)");
+             insertToDateReport.setInt(1,id);
+             insertToDateReport.setDate(2, sqlDate);
+            insertToDateReport.setInt(3,1);
+            insertToDateReport.executeUpdate();
+             
               Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
               alert.setHeaderText(null);
               alert.setTitle("Confirmation");
@@ -1414,13 +1427,15 @@ public class Main extends Application {
                  } catch (SQLException e) {
                      e.printStackTrace();
                  }
-             }if(updateReport != null){
+
+             }if(insertToDateReport != null){
                  try {
-                     updateReport.close();
+                     insertToDateReport.close();
                  } catch (SQLException e) {
                      e.printStackTrace();
                  }
-             }if(connection != null){
+             }
+             if(connection != null){
                  try {
                      connection.close();
                  } catch (SQLException e) {
@@ -2116,7 +2131,7 @@ return ans;
        PreparedStatement checkAvailability = null;// in one query i will search  for availability and return the names of items that are not available in the quantity ordered
        PreparedStatement updateData = null;
        ResultSet getItemsSet = null;
-       PreparedStatement updateReport = null;// this will work if the data is accepted (ie the items will be purchased then we have to update the report to add the quantity for the items purchased in report )
+        PreparedStatement insertDateReport = null;
        String ans = "";// this will hold the name / if there is of the items that are not available
         try {
             connection = DriverManager.getConnection(url,username,mypassword);
@@ -2140,16 +2155,30 @@ return ans;
                    ans = resultText.toString();
 
            if(ans.equals("")) {//  if the result set was empty that means that no items exeed the quantity asked for by the user therefore i can use this other query to update now the items table where i will be updating all the quantiy in items - quantity asked by the user for the specific items in his card
-                updateData = connection.prepareStatement("UPDATE items INNER JOIN cart ON (items.id = cart.cartId)\n" +
+               ObservableList<Products> observableListProducts = FXCollections.observableArrayList();
+               getCartData(observableListProducts,name);
+               // those two lines are to get the data from cart and store it in this observable list
+               insertDateReport = connection.prepareStatement("INSERT INTO dateReport VALUES(?,?,?)");
+
+               java.sql.Date sqlDate = new java.sql.Date(new java.util.Date().getTime());
+
+               for(Products p : observableListProducts){
+                   insertDateReport.setInt(1,p.getId());
+                   insertDateReport.setDate(2,sqlDate);
+                   insertDateReport.setInt(3,p.getCartQuantity());
+                   insertDateReport.executeUpdate();
+               }
+
+
+
+               updateData = connection.prepareStatement("UPDATE items INNER JOIN cart ON (items.id = cart.cartId)\n" +
                         "SET items.quantity = items.quantity-cart.cartQuantity\n" +
                         "WHERE cart.userName = ? ;");
             updateData.setString(1,name);
             updateData.executeUpdate();
-            updateReport = connection.prepareStatement("UPDATE report INNER JOIN cart ON (report.id = cart.cartId)\n" +
-                    "SET report.quantitySold =report.quantitySold + cart.cartQuantity\n" +
-                    "WHERE cart.userName = ? ;");
-            updateReport.setString(1,name);
-            updateReport.executeUpdate(); // in case the items are actually purchase add to my report the number of items for those specific items
+
+
+
                 updateData = connection.prepareStatement("DELETE FROM cart WHERE userName = ?;");
                 updateData.setString(1,name);
                 updateData.executeUpdate();// after doing all my updates now i have to delete the data from cart table that are related to the user because he actually purchased those items
@@ -2176,9 +2205,9 @@ return ans;
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-            }if(updateReport != null){
+            }if(insertDateReport != null){
                 try {
-                    updateReport.close();
+                    insertDateReport.close();
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -2884,6 +2913,7 @@ return ans;
 
     }
     public  void reportButtonClicked(Scene scene1,Stage stage){
+
         TableView<Report> reportTableView = new TableView<>();
 
         TableColumn<Report,String> typeCol = new TableColumn<>("Type");
@@ -2907,9 +2937,8 @@ return ans;
         quantityCol.setCellValueFactory(new PropertyValueFactory<>("quantitySold"));
 
         reportTableView.getColumns().addAll(typeCol,nameCol,priceCol,idCol,quantityCol);
-        ObservableList<Report> observableListStock = FXCollections.observableArrayList();
-        getReportData(observableListStock);// this method will interract with the database and return the resultset as a observable list holding the data of all the items in the report table
-       reportTableView.setItems(observableListStock);
+        ObservableList<Report> observableListDateReport = FXCollections.observableArrayList();
+
 
        Button returnButton = new Button("Return");
        Button printButton = new Button("Print");
@@ -2922,12 +2951,63 @@ return ans;
 
        topBox.getChildren().add(label);
 
+       HBox secondTopBox = new HBox();// this is the box where ill put the dates to pick from
+     secondTopBox.setSpacing(10);
+     secondTopBox.setAlignment(Pos.CENTER);
+        DatePicker fromPicker = new DatePicker();
+        DatePicker toPicker = new DatePicker();
+        Label fromlabel = new Label("From");
+        Label toLabel = new Label("To");
+        Label[] fromTo = new Label[]{fromlabel,toLabel};
+        for(Label l : fromTo){
+            l.setFont(Font.font("Copperplate Gothic Bold",10));
+            l.setStyle("-fx-text-fill: white;\n" +
+                    "  -fx-font-weight: bold;\n" +
+                    "  -fx-effect: dropshadow( gaussian , rgb(8, 7, 7) , 0,0,0,1 )");
+
+        }
+
+        Button goButton = new Button("GO");
+        goButton.setId("smallBlue");
+
+       goButton.setOnAction( e ->{
+           if(fromPicker.getValue() == null || toPicker.getValue() == null){
+               Alert alert = new Alert(Alert.AlertType.WARNING);
+               alert.setHeaderText(null);
+               alert.setContentText("Cannot have an empty date!!");
+               DialogPane dialogPane = alert.getDialogPane();
+               dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+               dialogPane.getStyleClass().add("dialog-pane");
+               alert.showAndWait();
+           }else {
+               // i am using a formatter to get a string from the date picker with a specific format that i shoose
+               if(!observableListDateReport.isEmpty()) {
+                   observableListDateReport.clear();
+               }
+               DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+               LocalDate from = fromPicker.getValue();
+               fromDate = formatter.format(from);
+               LocalDate to = toPicker.getValue();
+                toDate = formatter.format(to);
+               getDateReportData(observableListDateReport, fromDate, toDate);// this method will interract with the database and return the resultset as a observable list holding the data of all the items in the report table
+               reportTableView.setItems(observableListDateReport);
+          
+           }
+
+
+       });
+
+        secondTopBox.getChildren().addAll(fromlabel,fromPicker,toLabel,toPicker,goButton);
+
+
+
+
        HBox buttomBox = new HBox();
        buttomBox.getChildren().addAll(returnButton,printButton);
        VBox layout = new VBox();
        layout.setStyle("-fx-background-color:darkblue;");
-       layout.getChildren().addAll(topBox,reportTableView,buttomBox);
-       Scene scene = new Scene(layout,502,480);
+       layout.getChildren().addAll(topBox,secondTopBox,reportTableView,buttomBox);
+       Scene scene = new Scene(layout,515,480);
         scene.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
 
         returnButton.setOnAction( e -> {
@@ -2935,31 +3015,86 @@ return ans;
          stage.show();
       });
         printButton.setOnAction( e -> {
-            printReport();
+            if(observableListDateReport.isEmpty()){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setHeaderText(null);
+                alert.setContentText("No information in table to print!!");
+                DialogPane dialogPane = alert.getDialogPane();
+                dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                dialogPane.getStyleClass().add("dialog-pane");
+                alert.showAndWait();
+            }else {
+                printReport(observableListDateReport,fromDate,toDate);
+            }
         });
     stage.setScene(scene);
     stage.show();
 
     }
-    // this method will search the database to get me the report of items and quantity sold
-    // for each item , this report will be added in a observable list that will be
-    // used to fill the report table when u enter the app as the admin (tony with pass: 123)
-  public  void getReportData(ObservableList<Report> observableList){
+
+
+    public void  printReport(ObservableList<Report> observableList ,String from , String to){
+      StringBuilder reportResult = new StringBuilder();
+       for(Report r: observableList) {
+            reportResult.append("TYPE : ").append(r.getType()).append("/ NAME : ").append(r.getName()).append("/ PRICE : ").append(r.getPrice()).append("/ ID : ").append(r.getId()).append("/ QUANTITY SOLD: ").append(r.getQuantitySold()).append("\r\n");
+       }
+
+     String ans = "this is a report of sold items from: " +from +" to: "+to+ "\r\n"+ reportResult;
+      // now i will print this result to the file on my pc
+     // using the fileWriter method
+
+
+      try (FileWriter f = new FileWriter("/users/Toshiba/Desktop/report.txt", true);
+           BufferedWriter b = new BufferedWriter(f);
+           PrintWriter p = new PrintWriter(b);) {
+          p.println(ans);
+
+      } catch (IOException i) {
+          i.printStackTrace();
+      }
+
+  }
+  public void getDateReportData(ObservableList<Report> observableList ,String fromDate , String toDate){
         Connection connection = null;
+        PreparedStatement viewStatement = null;
         PreparedStatement getData = null;
         ResultSet resultSet = null;
+        PreparedStatement dropView = null;
 
       try {
           connection = DriverManager.getConnection(url,username,mypassword);
-         getData = connection.prepareStatement("SELECT * FROM report;");
-         resultSet = getData.executeQuery();
-         while(resultSet.next()){
-             observableList.add(new Report(resultSet.getString(1),resultSet.getString(2),Double.parseDouble(resultSet.getString(3)),Integer.parseInt(resultSet.getString(4)),Integer.parseInt(resultSet.getString(5))));
-         }
+          viewStatement = connection.prepareStatement("CREATE VIEW t1 AS (\n" +
+                  "    SELECT repId , SUM(repQuantity) AS sum\n" +
+                  "FROM dateReport\n" +
+                  "WHERE repDate BETWEEN ? AND ?\n" +
+                  "GROUP BY repId \n" +
+                  ");");
+          viewStatement.setString(1,fromDate);
+          viewStatement.setString(2,toDate);
+          viewStatement.execute();
+          // first step creating the view
+          // now the query to get the data
+          getData = connection.prepareStatement("SELECT type,name,price ,id , sum FROM items inner JOIN t1\n" +
+                  "on items.id = t1.repId;");
+          resultSet = getData.executeQuery();
+          while (resultSet.next()){
+              observableList.add(new Report(resultSet.getString(1),resultSet.getString(2),resultSet.getDouble(3),resultSet.getInt(4),resultSet.getInt(5)));
+          }// now that i added the result to the observable list i can close the table t1 so when i use the go method again it will not make a problem when i open another table t1
+          dropView = connection.prepareStatement("DROP VIEW  t1;");
+          dropView.execute();
+
+
+
       } catch (SQLException e) {
           e.printStackTrace();
       }finally {
-          if(getData != null){
+          if(viewStatement != null){
+              try {
+                  viewStatement.close();
+              } catch (SQLException e) {
+                  e.printStackTrace();
+              }
+          }if(getData != null){
               try {
                   getData.close();
               } catch (SQLException e) {
@@ -2971,69 +3106,20 @@ return ans;
               } catch (SQLException e) {
                   e.printStackTrace();
               }
-          }if(connection != null){
+          }if(dropView != null){
+              try {
+                  dropView.close();
+              } catch (SQLException e) {
+                  e.printStackTrace();
+              }
+          }
+          if(connection != null){
               try {
                   connection.close();
               } catch (SQLException e) {
                   e.printStackTrace();
               }
           }
-      }
-
-  }
-
-  // in this method we are going to get the data from the databse of the report (from the report table ) and we will print this report to an external file on my laptop
-
-  public void  printReport(){
-      Connection connection = null;
-      PreparedStatement getReportData = null;
-      ResultSet dataSet = null;
-      String reportResult ="";
-      try {
-          connection = DriverManager.getConnection(url,username,mypassword);
-          getReportData = connection.prepareStatement("SELECT * FROM report;");
-          dataSet = getReportData.executeQuery();
-          while (dataSet.next()){
-              reportResult += "type: "+dataSet.getString(1)+" - name: "+dataSet.getString(2)+" - price: "+dataSet.getDouble(3)+" - id: "+dataSet.getInt(4)+" -quantity sold: "+dataSet.getInt(5)+"\r\n";
-          }
-      } catch (SQLException e) {
-          e.printStackTrace();
-      }finally {
-          if(getReportData != null){
-              try {
-                  getReportData.close();
-              } catch (SQLException e) {
-                  e.printStackTrace();
-              }
-          }if(dataSet != null){
-              try {
-                  dataSet.close();
-              } catch (SQLException e) {
-                  e.printStackTrace();
-              }
-          }if(connection != null){
-              try {
-                  connection.close();
-              }catch (SQLException e){
-                  e.printStackTrace();
-              }
-          }
-      }
-      // now after getting the info we will print those to the file
-     // first i get the timeStamp exactly at the time of printing the document
-      String timeStamp = new SimpleDateFormat("yyyy/MM/dd_HH:mm:ss").format(Calendar.getInstance().getTime());
-     String ans = "this report was printed at : " +timeStamp + "\r\n"+ reportResult;
-      // now i will print this result to the file on my pc
-     // using the fileWriter method
-      System.out.println(ans);
-
-      try (FileWriter f = new FileWriter("/users/Toshiba/Desktop/report.txt", true);
-           BufferedWriter b = new BufferedWriter(f);
-           PrintWriter p = new PrintWriter(b);) {
-          p.println(ans);
-
-      } catch (IOException i) {
-          i.printStackTrace();
       }
 
   }
@@ -3046,7 +3132,7 @@ return ans;
 
 
 
-
+//
 
 // learn anchor pane
 
