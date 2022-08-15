@@ -3025,6 +3025,13 @@ return ans;
                 alert.showAndWait();
             }else {
                 printReport(observableListDateReport,fromDate,toDate);
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert.setHeaderText("confirm");
+                alert.setContentText("Report successfully printed check the file on your pc");
+                DialogPane dialogPane = alert.getDialogPane();
+                dialogPane.getStylesheets().add(getClass().getResource("/Cart.css").toExternalForm());
+                dialogPane.getStyleClass().add("dialogBlue");
+                alert.showAndWait();
             }
         });
     stage.setScene(scene);
